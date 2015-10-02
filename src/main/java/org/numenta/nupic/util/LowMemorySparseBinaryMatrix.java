@@ -22,28 +22,24 @@
 
 package org.numenta.nupic.util;
 
+import java.util.Arrays;
+
 import gnu.trove.TIntCollection;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.TIntList;
 import gnu.trove.map.TIntIntMap;
 import gnu.trove.map.hash.TIntIntHashMap;
 
-import java.lang.reflect.Array;
-import java.util.Arrays;
-
-@SuppressWarnings("rawtypes")
-public class SparseBinaryMatrix extends SparseMatrixSupport {
+public class LowMemorySparseBinaryMatrix extends SparseMatrixSupport<Integer> {
     private TIntIntMap sparseMap = new TIntIntHashMap();
     private int[] trueCounts;
-    private Object backingArray;
     
-    public SparseBinaryMatrix(int[] dimensions) {
+    public LowMemorySparseBinaryMatrix(int[] dimensions) {
         this(dimensions, false);
     }
     
-    public SparseBinaryMatrix(int[] dimensions, boolean useColumnMajorOrdering) {
+    public LowMemorySparseBinaryMatrix(int[] dimensions, boolean useColumnMajorOrdering) {
         super(dimensions, useColumnMajorOrdering);
-        this.backingArray = Array.newInstance(int.class, dimensions);
         this.trueCounts = new int[dimensions[0]];
     }
     
@@ -53,10 +49,14 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param val
      * @param coordinates
      */
-    private void back(int val, int... coordinates) {
-		ArrayUtils.setValue(this.backingArray, val, coordinates);
-        //update true counts
-		trueCounts[coordinates[0]] = ArrayUtils.aggregateArray(((Object[])this.backingArray)[coordinates[0]]);
+    private void updateTrueCounts(int val, int... coordinates) {
+        int sum = 0;
+        
+        for (int j = 0; j < coordinates[1]; j++) {
+        	sum += getIntValue(coordinates[0], j);
+        }
+        
+		trueCounts[coordinates[0]] = sum;
 	}
     
     /**
@@ -70,9 +70,10 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * 			an actual value instead of the array holding it.
      */
      public Object getSlice(int... coordinates) {
-		Object slice = backingArray;
-		for(int i = 0;i < coordinates.length;i++) {
-			slice = Array.get(slice, coordinates[i]);;
+    	 int[] dimensions = getDimensions();
+    	 int[] slice = new int[dimensions[0]];
+    	 for(int j = 0; j < dimensions[0]; j++) {
+			slice[j] = getIntValue(j, coordinates[0]);
 		}
 		//Ensure return value is of type Array
 		if(!slice.getClass().isArray()) {
@@ -92,8 +93,8 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param results			the results array
      */
     public void rightVecSumAtNZ(int[] inputVector, int[] results) {
-    	for(int i = 0;i < dimensions[0];i++) {
-    		int[] slice = (int[])(dimensions.length > 1 ? getSlice(i) : backingArray);
+    	for(int i = 0;i < getDimensions()[0];i++) {
+    		int[] slice =  (int[]) getSlice(i);
     		for(int j = 0;j < slice.length;j++) {
     			results[i] += (inputVector[j] * slice[j]);
     		}
@@ -107,7 +108,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param object    the object to be indexed.
      */
     @Override
-    public SparseBinaryMatrix set(int index, int value) {
+    public LowMemorySparseBinaryMatrix set(int index, int value) {
     	int[] coordinates = computeCoordinates(index);
         return set(value, coordinates);
     }
@@ -119,9 +120,9 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param object        the object to be indexed.
      */
     @Override
-    public SparseBinaryMatrix set(int value, int... coordinates) {
+    public LowMemorySparseBinaryMatrix set(int value, int... coordinates) {
         sparseMap.put(computeIndex(coordinates), value);
-        back(value, coordinates);
+        updateTrueCounts(value, coordinates);
         return this;
     }
     
@@ -133,7 +134,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * 
      * @return this {@code SparseMatrix} implementation
      */
-    public SparseBinaryMatrix set(int[] indexes, int[] values) { 
+    public LowMemorySparseBinaryMatrix set(int[] indexes, int[] values) { 
         for(int i = 0;i < indexes.length;i++) {
             set(indexes[i], values[i]);
         }
@@ -147,7 +148,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param index     the index the object will occupy
      * @param object    the object to be indexed.
      */
-    public SparseBinaryMatrix setForTest(int index, int value) {
+    public LowMemorySparseBinaryMatrix setForTest(int index, int value) {
         sparseMap.put(index, value);         
         return this;
     }
@@ -161,7 +162,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * 
      * @return this {@code SparseMatrix} implementation
      */
-    public SparseBinaryMatrix set(int[] indexes, int[] values, boolean isTest) { 
+    public LowMemorySparseBinaryMatrix set(int[] indexes, int[] values, boolean isTest) { 
         for(int i = 0;i < indexes.length;i++) {
         	if(isTest) setForTest(indexes[i], values[i]);
         	else set(indexes[i], values[i]);
@@ -200,8 +201,6 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * being set
      */
     public void clearStatistics(int row) {
-    	int[] slice = (int[])Array.get(backingArray, row);
-    	Arrays.fill(slice, 0);
     	trueCounts[row] = 0;
 		sparseMap.put(row, 0);
     }
@@ -252,7 +251,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param inputMatrix   the matrix containing the "on" bits to or
      * @return  this matrix
      */
-    public SparseBinaryMatrix or(SparseBinaryMatrix inputMatrix) {
+    public LowMemorySparseBinaryMatrix or(LowMemorySparseBinaryMatrix inputMatrix) {
         int[] mask = inputMatrix.getSparseIndices();
         int[] ones = new int[mask.length];
         Arrays.fill(ones, 1);
@@ -267,7 +266,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param onBitIndexes  the matrix containing the "on" bits to or
      * @return  this matrix
      */
-    public SparseBinaryMatrix or(TIntCollection onBitIndexes) {
+    public LowMemorySparseBinaryMatrix or(TIntCollection onBitIndexes) {
         int[] ones = new int[onBitIndexes.size()];
         Arrays.fill(ones, 1);
         return set(onBitIndexes.toArray(), ones);
@@ -281,7 +280,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param onBitIndexes  the int array containing the "on" bits to or
      * @return  this matrix
      */
-    public SparseBinaryMatrix or(int[] onBitIndexes) {
+    public LowMemorySparseBinaryMatrix or(int[] onBitIndexes) {
         int[] ones = new int[onBitIndexes.length];
         Arrays.fill(ones, 1);
         return set(onBitIndexes, ones);
@@ -295,7 +294,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param matrix
      * @return
      */
-    public boolean all(SparseBinaryMatrix matrix) {
+    public boolean all(LowMemorySparseBinaryMatrix matrix) {
         return sparseMap.keySet().containsAll(matrix.sparseMap.keys());
     }
     
@@ -331,7 +330,7 @@ public class SparseBinaryMatrix extends SparseMatrixSupport {
      * @param matrix
      * @return
      */
-    public boolean any(SparseBinaryMatrix matrix) {
+    public boolean any(LowMemorySparseBinaryMatrix matrix) {
         for(int i : matrix.sparseMap.keys()) {
             if(sparseMap.containsKey(i)) return true;
         }

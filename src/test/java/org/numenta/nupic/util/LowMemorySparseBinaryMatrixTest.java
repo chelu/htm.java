@@ -22,34 +22,36 @@
 
 package org.numenta.nupic.util;
 
-/**
- * Provides contract for flat matrix implementations.
- * 
- * @author Jose Luis Martin
- */
-public interface FlatMatrix<T> extends Matrix<T> {
+import org.junit.Test;
 
-	T get(int index);
+import org.junit.Assert;
+
+/**
+ * @author Jose Luis Martin
+ *
+ */
+public class LowMemorySparseBinaryMatrixTest {
 	
-	FlatMatrix<T> set(int index, T value);
-	
-	int computeIndex(int[] coordinates);
-	
-	/**
-	 * Returns the maximum accessible flat index.
-	 * @return  the maximum accessible flat index.
-	 */
-	int getMaxIndex();
-	
-	public int computeIndex(int[] coordinates, boolean doCheck);
-	
-	/**
-	 * Returns an integer array representing the coordinates of the specified index
-	 * in terms of the configuration of this {@code SparseMatrix}.
-	 * @param index the flat index to be returned as coordinates
-	 * @return  coordinates
-	 */
-	int[] computeCoordinates(int index);
-	
-	int[] getDimensionMultiples();
+	@Test
+	public void testTrueCount() {
+		int[] expected = {4, 3, 2, 1, 0};
+		int dense[][] = {
+				{0, 1, 1, 1, 1},
+				{0, 0, 1, 1, 1},
+				{0, 0, 0, 1, 1},
+				{0, 0, 0, 0, 1},
+				{0, 0, 0, 0, 0}
+		};
+		
+		LowMemorySparseBinaryMatrix sp = new LowMemorySparseBinaryMatrix(new int[] {5, 5});
+		
+		for (int i = 0; i < 5; i++) {
+			for (int j = 0; j < 5; j++) {
+				sp.set(dense[i][j], i, j);
+			}
+		}
+		
+		Assert.assertArrayEquals(expected, sp.getTrueCounts());
+	}
+
 }

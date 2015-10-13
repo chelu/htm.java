@@ -50,12 +50,6 @@ public interface SparseMatrix<T> extends FlatMatrix<T>{
 	int[] get1DIndexes();
 
 	/**
-	 * Returns the maximum accessible flat index.
-	 * @return  the maximum accessible flat index.
-	 */
-	int getMaxIndex();
-
-	/**
 	 * Uses the specified {@link TypeFactory} to return an array
 	 * filled with the specified object type, according this {@code SparseMatrix}'s 
 	 * configured dimensions

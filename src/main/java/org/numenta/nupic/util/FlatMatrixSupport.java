@@ -183,6 +183,11 @@ public abstract class FlatMatrixSupport<T> implements FlatMatrix<T> {
     }
     
     @Override
+   	public int getMaxIndex() {
+           return getDimensions()[0] * Math.max(1, getDimensionMultiples()[0]) - 1;
+    }
+    
+    @Override
 	public int[] getDimensions() {
 		return this.dimensions;
 	}

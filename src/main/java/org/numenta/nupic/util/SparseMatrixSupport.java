@@ -54,16 +54,6 @@ public abstract class SparseMatrixSupport<T> extends FlatMatrixSupport<T> implem
      * Sets the object to occupy the specified index.
      * 
      * @param index     the index the object will occupy
-     * @param object    the object to be indexed.
-     * 
-     * @return this {@code SparseMatrix} implementation
-     */
-    protected <S extends SparseMatrixSupport<T>> S set(int index, T object) { return null; }
-    
-    /**
-     * Sets the object to occupy the specified index.
-     * 
-     * @param index     the index the object will occupy
      * @param value     the value to be indexed.
      * 
      * @return this {@code SparseMatrix} implementation
@@ -191,11 +181,6 @@ public abstract class SparseMatrixSupport<T> extends FlatMatrixSupport<T> implem
             }
             else visit(bounds, currentDimension + 1, p, results);
         }
-    }
-    
-    @Override
-	public int getMaxIndex() {
-        return getDimensions()[0] * Math.max(1, getDimensionMultiples()[0]) - 1;
     }
     
     @Override

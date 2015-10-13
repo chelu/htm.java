@@ -63,11 +63,10 @@ public class SparseObjectMatrix<T> extends SparseMatrixSupport<T> {
      * @param index     the index the object will occupy
      * @param object    the object to be indexed.
      */
-    @SuppressWarnings("unchecked")
     @Override
-    public <S extends SparseMatrixSupport<T>> S set(int index, T object) {
+    public SparseObjectMatrix<T> set(int index, T object) {
         sparseMap.put(index, (T)object);
-        return (S)this;
+        return this;
     }
     
     /**
@@ -129,5 +128,10 @@ public class SparseObjectMatrix<T> extends SparseMatrixSupport<T> {
     public String toString() {
     	return Arrays.toString(getDimensions());
     }
+
+	@Override
+	public T get(int index) {
+		return this.sparseMap.get(index);
+	}
 
 }

@@ -29,11 +29,20 @@ public class SetSparseMatrix extends SparseMatrixSupport<Integer> {
 
 	@Override
 	public SetSparseMatrix set(int[] coordinates, Integer value) {
-		if (value > 0)
-			this.indexes.add(computeIndex(coordinates));
-		
-		return this;
+		return set(computeIndex(coordinates), value);
 			
 	}
 	
+	@Override
+	public Integer get(int index) {
+		return this.indexes.contains(index) ? 0 : 1;
+	}
+
+	@Override
+	public SetSparseMatrix set(int index, Integer value) {
+		if (value > 0) 
+			this.indexes.add(index);
+		
+		return this;
+	}	
 }

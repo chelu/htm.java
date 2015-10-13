@@ -23,7 +23,7 @@
 package org.numenta.nupic.util;
 
 /**
- * Matrix implementation that store objects in a flat object array.
+ * {@link FlatMatrix} implementation that store objects in a flat object array.
  * 
  * @author Jose Luis Martin
  */
@@ -37,12 +37,24 @@ public class FlatArrayMatrix<T> extends FlatMatrixSupport<T> {
 
 	@Override
 	public T get(int... indexes) {
-		return data[computeIndex(indexes)];
+		return get(computeIndex(indexes));
+	}
+	
+	@Override
+	public T get(int index) {
+		return data[index];
 	}
 
 	@Override
 	public FlatArrayMatrix<T> set(int[] indexes, T value) {
-		this.data[computeIndex(indexes)] = value; 
+		set(computeIndex(indexes), value); 
 		return this;
 	}
+
+	@Override
+	public FlatArrayMatrix<T> set(int index, T value) {
+		this.data[index] = value;
+		return this;
+	}
+	
 }
